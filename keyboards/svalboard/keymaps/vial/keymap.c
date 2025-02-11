@@ -178,3 +178,128 @@ bool achordion_chord(uint16_t tap_hold_keycode, keyrecord_t* tap_hold_record,
     return achordion_opposite_hands(tap_hold_record, other_record);
 }
 
+enum custom_keycodes {
+    M_KEYBOARD = SV_SAFE_RANGE,
+    M_ON,
+    M_ENT,
+    M_ION,
+    M_UEN,
+    M_MENT,
+    M_THE,
+    M_DOT_SLASH, aann
+};
+
+bool remember_last_key_user(uint16_t keycode, keyrecord_t* record,
+                            uint8_t* remembered_mods) {
+    switch (keycode) {
+        case KC_NO:
+            return false;
+        case QK_LAYER_TAP ... QK_LAYER_TAP_MAX:
+            return false;
+    }
+
+    return true;  // Other keys can be repeated.
+}
+
+bool process_magic_repeat(uint16_t keycode, keyrecord_t* record) {
+    uint16_t layer = QK_LAYER_TAP_GET_TAP_KEYCODE(keycode);
+    bool magic = false;
+    bool shift = false;
+    if (layer > 40) {
+        shift = true;
+        magic = layer >= 42;
+        layer = 0;
+    } else if (layer > 20) {
+        layer -= 20;
+        magic = true;
+    }
+    if (record->tap.count && record->event.pressed) {
+        uint16_t tr_keycode = magic ? get_alt_repeat_key_keycode() : get_last_keycode();
+        process_record_user(keycode, record);
+        tap_code16(tr_keycode);
+    } else if (record->event.pressed) {
+        if (shift) {
+            register_mods(MOD_BIT_LSHIFT);
+        } else {
+            layer_on(layer);
+        }
+    } else {
+        if (shift) {
+            unregister_mods(MOD_BIT_LSHIFT);
+        } else {
+            layer_off(layer);
+        }
+    }
+
+    return false;
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+    switch (keycode) {
+        case QK_LAYER_TAP ... QK_LAYER_TAP_MAX:
+            return process_magic_repeat(keycode, record);
+            break;
+        case M_ON:
+            if (record->event.pressed) {
+                SEND_STRING("on");
+            }
+            break;
+        case M_ENT:
+            if (record->event.pressed) {
+                SEND_STRING("ent"); break;
+            }
+            break;
+        case M_ION:
+            if (record->event.pressed) {
+                SEND_STRING("ion"); break;
+            }
+            break;
+        case M_UEN:
+            if (record->event.pressed) {
+                SEND_STRING("uen"); break;
+            }
+            break;
+        case M_MENT:
+            if (record->event.pressed) {
+                SEND_STRING("ment"); break;
+            }
+            break;
+        case M_THE:
+            if (record->event.pressed) {
+                SEND_STRING("the"); break;
+            }
+            break;
+        case M_DOT_SLASH:
+            if (record->event.pressed) {
+                SEND_STRING("./"); break;
+            }
+            break;
+    }
+    return true;
+}
+
+uint16_t get_alt_repeat_key_keycode_user(uint16_t keycode, uint8_t mods) {
+    switch (keycode) {
+        case KC_A: return KC_O;
+        case KC_C: return KC_Y;
+        case KC_D: return KC_Y;
+        case KC_E: return KC_U;
+        case KC_G: return KC_Y;
+        case KC_I: return M_ON;
+        case KC_L: return KC_K;
+        case KC_M: return M_ENT;
+        case KC_N: return M_ION;
+        case KC_O: return KC_A;
+        case KC_P: return KC_Y;
+        case KC_Q: return M_UEN;
+        case KC_R: return KC_L;
+        case KC_S: return KC_K;
+        case KC_T: return M_MENT;
+        case KC_U: return KC_E;
+        case KC_Y: return KC_P;
+        case KC_SPC: return M_THE;
+        case KC_DOT: return M_DOT_SLASH;
+    }
+
+    return KC_TRNS;  // Defer to default definitions.
+}
