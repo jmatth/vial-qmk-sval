@@ -59,6 +59,20 @@ layer_state_t layer_state_set_user(layer_state_t state) {
   for (int i = 0; i < RGBLIGHT_LAYERS; ++i) {
       rgblight_set_layer_state(i, layer_state_cmp(state, i));
   }
+
+  layer_state_t layer_state_set_user(layer_state_t state) {
+  // checks highest layer other than target layer
+  switch(get_highest_layer(remove_auto_mouse_layer(state, true))) {
+      case _LAYER5 ... _LAYER14:
+          // remove_auto_mouse_target must be called to adjust state *before* setting enable
+          state = remove_auto_mouse_layer(state, false);
+          set_auto_mouse_enable(false);
+          break;
+      default:
+          set_auto_mouse_enable(true);
+          break;
+  }
+
   return state;
 }
 
@@ -214,9 +228,7 @@ bool process_magic_repeat(uint16_t keycode, keyrecord_t* record) {
         magic = true;
     }
     if (record->tap.count && record->event.pressed) {
-        uint16_t tr_keycode = magic ? get_alt_repeat_key_keycode() : get_last_keycode();
-        process_record_user(keycode, record);
-        tap_code16(tr_keycode);
+        tap_code16(magic ? get_alt_repeat_key_keycode() : get_last_keycode());
     } else if (record->event.pressed) {
         if (shift) {
             register_mods(MOD_BIT_LSHIFT);
@@ -290,7 +302,7 @@ uint16_t get_alt_repeat_key_keycode_user(uint16_t keycode, uint8_t mods) {
         case KC_M: return M_ENT;
         case KC_N: return M_ION;
         case KC_O: return KC_A;
-        case KC_P: return KC_Y;
+        case KC_P: return KC_H;
         case KC_Q: return M_UEN;
         case KC_R: return KC_L;
         case KC_S: return KC_K;
