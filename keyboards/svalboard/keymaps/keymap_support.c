@@ -368,7 +368,8 @@ void matrix_scan_kb(void) {
 
 void mouse_mode(bool on) {
     if (global_saved_values.auto_mouse) {
-        if (on) {
+        uint8_t current_layer = get_highest_layer(layer_state);
+        if (on && (current_layer < 5 || current_layer >= MH_AUTO_BUTTONS_LAYER)) {
             layer_on(MH_AUTO_BUTTONS_LAYER);
             mh_auto_buttons_timer = timer_read();
             mouse_mode_enabled = true;
